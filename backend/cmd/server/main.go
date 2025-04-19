@@ -4,9 +4,14 @@ import (
 	"log"
 	"os"
 
-	// Import the internal config package
-	// Use the module path you defined in go.mod
+	// Adjust import paths based on your actual module path
 	"github.com/prasanna-1807/synapse-sprint/backend/internal/config"
+	"github.com/prasanna-1807/synapse-sprint/backend/internal/database"
+	"github.com/prasanna-1807/synapse-sprint/backend/internal/repository" // Import repository package
+)
+
+const (
+	DatabaseName = "synapse_sprint_db" // Define database name
 )
 
 func main() {
@@ -16,16 +21,27 @@ func main() {
 	// Load configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		logger.Fatalf("Failed to load configuration: %v", err) // Use Fatalf to exit if config fails
+		logger.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Use cfg.ServerPort and cfg.MongoURI below...
+	// Initialize database connection
+	mongoClient, err := database.ConnectDB(cfg.MongoURI)
+	if err != nil {
+		logger.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer database.DisconnectDB(mongoClient)
 
-	// TODO: Initialize database connection (MongoDB) using cfg.MongoURI
-	// TODO: Initialize repositories (DAL)
-	// TODO: Initialize services (Business Logic)
-	// TODO: Initialize API handlers/router
+	// Get database handle
+	db := mongoClient.Database(DatabaseName) // Use constant for DB name
+
+	// Initialize repositories (DAL)
+	userRepo := repository.NewMongoUserRepository(db)
+	logger.Println("User repository initialized.")
+	// We will use userRepo later when initializing services
+
+	// TODO: Initialize services (Business Logic) - Pass userRepo here
+	// TODO: Initialize API handlers/router - Services will be passed here
 	// TODO: Start the HTTP server on port cfg.ServerPort
 
-	logger.Println("Server setup placeholder complete (config loaded). Exiting for now.")
+	logger.Println("Server setup complete (config loaded, DB connected, repos initialized). Exiting for now.")
 }
